@@ -13,9 +13,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install pyinstaller
-      - run: pyinstaller --onefile --windowed --name VMOAlarm VMOAlarm.py
+      - name: 安裝依賴
+        run: pip install pyinstaller
+      - name: 嘗試使用 onedir 模式打包 (用於診斷)
+        run: pyinstaller --onedir --windowed --name VMOAlarm VMOAlarm.py
+        continue-on-error: true
+      - name: 如果 onedir 失敗，顯示完整錯誤日誌
+        if: failure()
+        run: |
+          echo "打包失敗，以下是 build 目錄的完整內容："
+          dir build
+          echo "如果在 build 目錄中有 .log 文件，請檢查其內容。"
+      - name: 使用 onedir 模式成功後，再嘗試 onefile
+        if: success()
+        run: pyinstaller --onefile --windowed --name VMOAlarm VMOAlarm.py
       - uses: actions/upload-artifact@v4
         with:
           name: VMOAlarm-exe
-          path: dist/VMOAlarm.exe
+          path: dist/
